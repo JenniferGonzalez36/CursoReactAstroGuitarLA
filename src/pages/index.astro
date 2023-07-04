@@ -1,13 +1,97 @@
 ---
 import Layout from '../layouts/Layout.astro';
+
+import Guitarra from '../components/Guitarra.astro';
+import Post from '../components/Post.astro';
+
+const urlGuitarras = `${import.meta.env.PUBLIC_API_URL}/guitarras?populate=imagen`;
+const urlPosts = `${import.meta.env.PUBLIC_API_URL}/posts?populate=imagen`;
+const urlCurso = `${import.meta.env.PUBLIC_API_URL}/curso?populate=imagen`;
+
+const [resGuitarras, resPosts, resCurso] = await Promise.all([
+	fetch(urlGuitarras),
+	fetch(urlPosts),
+	fetch(urlCurso)
+]);
+
+const [{data: guitarras}, {data: posts}, {data: curso}] = await Promise.all([
+	resGuitarras.json(),
+	resPosts.json(),
+	resCurso.json(),
+]);
+
+const backgroundImage = `url(${curso.attributes.imagen.data.attributes.url})`;
 ---
+
+<style define:vars={{backgroundImage}}>
+	.curso{
+		background-image: linear-gradient(to right, rgb(0 0 0 / .65), rgb(0 0 0 / .85)), var(--backgroundImage);
+	}
+</style>
+
 
 <Layout title="Inicio" description='Página de tienda de instrumentos musicales, guitarras, cursos, blog y más'>
 	<main class="contenedor">
-		<h1 class="heading">Inicio</h1>
+		<h1 class="heading">Nuestra Colección</h1>
+		<div class="grid">
+			{guitarras?.map(guitarra => (
+				<Guitarra 
+					nombre = { guitarra.attributes.nombre }
+					descripcion = { guitarra.attributes.descripcion }
+					url = { guitarra.attributes.url }
+					precio = { guitarra.attributes.precio }
+					imagen = { guitarra.attributes.imagen.data.attributes.formats.medium.url }
+				/>
+			))}
+		</div>
 	</main>
+
+	<section class="curso">
+		<div class="contenedor grid">
+			<div class="contenido">
+				<h2 class="heading">{curso.attributes.titulo}</h2>
+				<p class="texto">{curso.attributes.contenido}</p>
+			</div>
+		</div>
+
+	</section>
+
+	<section class="contenedor">
+		<h2 class="heading">Blog</h2>
+
+		<div class="grid">
+			{posts?.map(post => (
+				<Post 
+					titulo = { post.attributes.titulo }
+					publishedAt = { post.attributes.publishedAt }
+					contenido = { post.attributes.contenido }
+					imagen = { post.attributes.imagen.data.attributes.formats.medium.url }
+					url = { post.attributes.url }
+				/>
+			))}
+		</div>
+	</section>
 </Layout>
 
 <style>
-	
+	.curso {
+		padding: 10rem 0;
+		margin-top: 10rem;
+		background-size: cover;
+		background-position: center center;
+	}
+	@media (min-width: 768px) {
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+		}
+		.contenido {
+			grid-column: 2 / 3;
+		}
+	}
+	.curso p {
+		text-align: center;
+		font-size: 2.4rem;
+		color: var(--white);
+	}
 </style>
